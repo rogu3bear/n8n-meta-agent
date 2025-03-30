@@ -1,0 +1,602 @@
+openapi: 3.0.0
+info:
+  title: Template Management API
+  version: 1.0.0
+  description: API for managing templates in the registry system
+  contact:
+    name: Registry Team
+    email: support@registry.com
+
+servers:
+  - url: /api/v1
+    description: API v1
+
+components:
+  schemas:
+    Template:
+      type: object
+      required:
+        - id
+        - name
+        - description
+        - type
+        - currentVersion
+        - versions
+        - metadata
+        - createdAt
+        - updatedAt
+      properties:
+        id:
+          type: string
+          format: uuid
+          description: Unique identifier for the template
+        name:
+          type: string
+          description: Name of the template
+        description:
+          type: string
+          description: Detailed description of the template
+        type:
+          type: string
+          description: Type of the template
+        currentVersion:
+          type: string
+          description: Current version of the template
+        versions:
+          type: array
+          items:
+            $ref: '#/components/schemas/TemplateVersion'
+        metadata:
+          $ref: '#/components/schemas/TemplateMetadata'
+        createdAt:
+          type: string
+          format: date-time
+          description: Creation timestamp
+        updatedAt:
+          type: string
+          format: date-time
+          description: Last update timestamp
+
+    TemplateVersion:
+      type: object
+      required:
+        - version
+        - changelog
+        - compatibility
+        - parameters
+        - dependencies
+        - capabilities
+        - deprecated
+      properties:
+        version:
+          type: string
+          description: Version number (semantic versioning)
+        changelog:
+          type: string
+          description: Description of changes in this version
+        compatibility:
+          type: object
+          description: Compatibility information
+        parameters:
+          type: array
+          items:
+            $ref: '#/components/schemas/TemplateParameter'
+        dependencies:
+          type: array
+          items:
+            $ref: '#/components/schemas/TemplateDependency'
+        capabilities:
+          type: array
+          items:
+            $ref: '#/components/schemas/TemplateCapability'
+        deprecated:
+          type: boolean
+          description: Whether this version is deprecated
+
+    TemplateParameter:
+      type: object
+      required:
+        - name
+        - type
+        - description
+      properties:
+        name:
+          type: string
+          description: Parameter name
+        type:
+          type: string
+          description: Parameter type
+        description:
+          type: string
+          description: Parameter description
+        required:
+          type: boolean
+          description: Whether the parameter is required
+        default:
+          type: any
+          description: Default value
+        pattern:
+          type: string
+          description: Validation pattern
+        min:
+          type: number
+          description: Minimum value
+        max:
+          type: number
+          description: Maximum value
+        enum:
+          type: array
+          items:
+            type: any
+          description: Allowed values
+
+    TemplateDependency:
+      type: object
+      required:
+        - name
+        - version
+        - type
+        - description
+      properties:
+        name:
+          type: string
+          description: Dependency name
+        version:
+          type: string
+          description: Required version
+        type:
+          type: string
+          description: Dependency type
+        description:
+          type: string
+          description: Dependency description
+
+    TemplateCapability:
+      type: object
+      required:
+        - name
+        - description
+        - parameters
+        - requiredPermissions
+      properties:
+        name:
+          type: string
+          description: Capability name
+        description:
+          type: string
+          description: Capability description
+        parameters:
+          type: array
+          items:
+            type: string
+          description: Required parameters
+        requiredPermissions:
+          type: array
+          items:
+            type: string
+          description: Required permissions
+
+    TemplateMetadata:
+      type: object
+      required:
+        - author
+        - category
+        - tags
+        - license
+        - repository
+        - documentation
+        - examples
+        - rating
+        - downloads
+        - lastUpdated
+      properties:
+        author:
+          type: string
+          description: Template author
+        category:
+          type: string
+          description: Template category
+        tags:
+          type: array
+          items:
+            type: string
+          description: Template tags
+        license:
+          type: string
+          description: License information
+        repository:
+          type: string
+          format: uri
+          description: Repository URL
+        documentation:
+          type: string
+          format: uri
+          description: Documentation URL
+        examples:
+          type: array
+          items:
+            type: string
+          description: Example usage
+        rating:
+          type: number
+          description: User rating
+        downloads:
+          type: number
+          description: Download count
+        lastUpdated:
+          type: string
+          format: date-time
+          description: Last update timestamp
+
+    CreateTemplate:
+      type: object
+      required:
+        - name
+        - description
+        - type
+      properties:
+        name:
+          type: string
+          description: Template name
+        description:
+          type: string
+          description: Template description
+        type:
+          type: string
+          description: Template type
+        parameters:
+          type: array
+          items:
+            $ref: '#/components/schemas/TemplateParameter'
+        dependencies:
+          type: array
+          items:
+            $ref: '#/components/schemas/TemplateDependency'
+        capabilities:
+          type: array
+          items:
+            $ref: '#/components/schemas/TemplateCapability'
+        metadata:
+          $ref: '#/components/schemas/TemplateMetadata'
+
+    UpdateTemplate:
+      type: object
+      properties:
+        name:
+          type: string
+          description: New template name
+        description:
+          type: string
+          description: New template description
+        type:
+          type: string
+          description: New template type
+        metadata:
+          $ref: '#/components/schemas/TemplateMetadata'
+
+    Error:
+      type: object
+      required:
+        - error
+        - message
+        - timestamp
+      properties:
+        error:
+          type: string
+          description: Error code
+        message:
+          type: string
+          description: Error message
+        timestamp:
+          type: string
+          format: date-time
+          description: Error timestamp
+        details:
+          type: object
+          description: Additional error details
+
+paths:
+  /templates:
+    post:
+      summary: Create a new template
+      operationId: createTemplate
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateTemplate'
+      responses:
+        '201':
+          description: Template created successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Template'
+        '400':
+          description: Invalid request data
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+    get:
+      summary: List templates
+      operationId: listTemplates
+      parameters:
+        - name: type
+          in: query
+          schema:
+            type: string
+          description: Filter by template type
+        - name: category
+          in: query
+          schema:
+            type: string
+          description: Filter by category
+        - name: tag
+          in: query
+          schema:
+            type: string
+          description: Filter by tag
+        - name: capability
+          in: query
+          schema:
+            type: string
+          description: Filter by capability
+        - name: search
+          in: query
+          schema:
+            type: string
+          description: Search query
+        - name: page
+          in: query
+          schema:
+            type: integer
+            default: 1
+          description: Page number
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            default: 10
+          description: Items per page
+      responses:
+        '200':
+          description: List of templates
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Template'
+
+  /templates/{id}:
+    parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+        description: Template ID
+    get:
+      summary: Get template by ID
+      operationId: getTemplate
+      responses:
+        '200':
+          description: Template details
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Template'
+        '404':
+          description: Template not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+    put:
+      summary: Update template
+      operationId: updateTemplate
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateTemplate'
+      responses:
+        '200':
+          description: Template updated successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Template'
+        '404':
+          description: Template not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+    delete:
+      summary: Delete template
+      operationId: deleteTemplate
+      responses:
+        '204':
+          description: Template deleted successfully
+        '404':
+          description: Template not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /templates/{id}/versions:
+    parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+        description: Template ID
+    post:
+      summary: Add new template version
+      operationId: addTemplateVersion
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/TemplateVersion'
+      responses:
+        '200':
+          description: Version added successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Template'
+        '404':
+          description: Template not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /templates/{id}/versions/{version}/deprecate:
+    parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+        description: Template ID
+      - name: version
+        in: path
+        required: true
+        schema:
+          type: string
+        description: Version to deprecate
+    put:
+      summary: Deprecate template version
+      operationId: deprecateTemplateVersion
+      responses:
+        '200':
+          description: Version deprecated successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Template'
+        '404':
+          description: Template or version not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /backups:
+    post:
+      summary: Create backup
+      operationId: createBackup
+      responses:
+        '201':
+          description: Backup created successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - message
+                  - timestamp
+                properties:
+                  message:
+                    type: string
+                  timestamp:
+                    type: string
+                    format: date-time
+    get:
+      summary: List backups
+      operationId: listBackups
+      responses:
+        '200':
+          description: List of backups
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: object
+                  required:
+                    - timestamp
+                    - size
+                  properties:
+                    timestamp:
+                      type: string
+                      format: date-time
+                    size:
+                      type: number
+
+  /backups/{timestamp}/restore:
+    parameters:
+      - name: timestamp
+        in: path
+        required: true
+        schema:
+          type: string
+          format: date-time
+        description: Backup timestamp
+    post:
+      summary: Restore backup
+      operationId: restoreBackup
+      responses:
+        '200':
+          description: Backup restored successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - message
+                  - timestamp
+                properties:
+                  message:
+                    type: string
+                  timestamp:
+                    type: string
+                    format: date-time
+        '404':
+          description: Backup not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /stats:
+    get:
+      summary: Get storage statistics
+      operationId: getStats
+      responses:
+        '200':
+          description: Storage statistics
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - totalTemplates
+                  - totalVersions
+                  - totalSize
+                  - cacheSize
+                  - lastBackup
+                properties:
+                  totalTemplates:
+                    type: number
+                  totalVersions:
+                    type: number
+                  totalSize:
+                    type: number
+                  cacheSize:
+                    type: number
+                  lastBackup:
+                    type: string
+                    format: date-time 

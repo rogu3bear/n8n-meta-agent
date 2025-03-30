@@ -1,0 +1,74 @@
+{
+  "nodes": [
+    {
+      "type": "n8n-nodes-base.start",
+      "name": "Start",
+      "parameters": {},
+      "position": [0, 0]
+    },
+    {
+      "type": "n8n-nodes-base.httpRequest",
+      "name": "Fetch Data",
+      "parameters": {
+        "url": "{{apiUrl}}",
+        "method": "GET",
+        "headers": {
+          "Authorization": "Bearer {{apiKey}}"
+        }
+      },
+      "position": [100, 0]
+    },
+    {
+      "type": "n8n-nodes-base.function",
+      "name": "Process Data",
+      "parameters": {
+        "functionCode": "// Process the data\nreturn items.map(item => {\n  const data = item.json;\n  return {\n    json: {\n      processed: true,\n      timestamp: new Date().toISOString(),\n      ...data\n    }\n  };\n});"
+      },
+      "position": [200, 0]
+    },
+    {
+      "type": "n8n-nodes-base.writeFile",
+      "name": "Save Results",
+      "parameters": {
+        "fileName": "{{outputPath}}/results-{{timestamp}}.json",
+        "content": "={{JSON.stringify($json, null, 2)}}",
+        "options": {
+          "append": false
+        }
+      },
+      "position": [300, 0]
+    }
+  ],
+  "connections": [
+    {
+      "from": {
+        "node": "Start",
+        "index": 0
+      },
+      "to": {
+        "node": "Fetch Data",
+        "index": 0
+      }
+    },
+    {
+      "from": {
+        "node": "Fetch Data",
+        "index": 0
+      },
+      "to": {
+        "node": "Process Data",
+        "index": 0
+      }
+    },
+    {
+      "from": {
+        "node": "Process Data",
+        "index": 0
+      },
+      "to": {
+        "node": "Save Results",
+        "index": 0
+      }
+    }
+  ]
+} 
